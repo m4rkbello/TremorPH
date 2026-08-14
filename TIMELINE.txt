@@ -6,17 +6,18 @@
 
 
 TOOLS/STACKS AND DEPENDENCIES THAT WE WANT TO USE FOR THIS PROJECT
-
-1.INSTALL DEPENDENCIES 
+1. INSTALL THE REACT NATIVE EXPO PACKAGE
+ ->npx create-expo-app . 
+2. INSTALL DEPENDENCIES 
 ->npm install @supabase/supabase-js zustand nativewind expo-notifications expo-sms expo-device expo-constants
 
-2. npm install -D tailwindcss @types/react-native
-3. npx tailwindcss init
+3. npm install -D tailwindcss @types/react-native
+4. npx tailwindcss init
 
-4. INSTALL SUPABASE AS 
+5. INSTALL SUPABASE AS 
 ->npm install -g supabase
 
-5. supabase login
+6. supabase login
 
-6.  ADDED
+7.  npm install @supabase/supabase-js zustand nativewind expo-notifications expo-sms expo-device expo-constants expo-router expo-location react-native-maps @react-native-async-storage/async-storage react-native-url-polyfill expo-secure-store expo-splash-screen
 
