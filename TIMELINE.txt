@@ -21,3 +21,4 @@ TOOLS/STACKS AND DEPENDENCIES THAT WE WANT TO USE FOR THIS PROJECT
 
 7.  npm install @supabase/supabase-js zustand nativewind expo-notifications expo-sms expo-device expo-constants expo-router expo-location react-native-maps @react-native-async-storage/async-storage react-native-url-polyfill expo-secure-store expo-splash-screen
 
+8. npm install -D tailwindcss @types/react-native @babel/core
