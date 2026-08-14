@@ -1,0 +1,24 @@
+1. FIRST CREATE A FOLDER USING BASH 
+->mkdir TremorPH 
+2. GO TO THAT FOLDER AS CD 
+->cd TremorPH 
+3.IN YOUR TERMINAL OR COMMANDLINE MAKE THIS RUN AS code . TO OPEN THE IDE THAT YOU HAVE 
+
+
+TOOLS/STACKS AND DEPENDENCIES THAT WE WANT TO USE FOR THIS PROJECT
+1. INSTALL THE REACT NATIVE EXPO PACKAGE
+ ->npx create-expo-app . 
+2. INSTALL DEPENDENCIES 
+->npm install @supabase/supabase-js zustand nativewind expo-notifications expo-sms expo-device expo-constants
+
+3. npm install -D tailwindcss @types/react-native
+4. npx tailwindcss init
+
+5. INSTALL SUPABASE AS 
+->npm install -g supabase
+
+6. supabase login
+
+7.  npm install @supabase/supabase-js zustand nativewind expo-notifications expo-sms expo-device expo-constants expo-router expo-location react-native-maps @react-native-async-storage/async-storage react-native-url-polyfill expo-secure-store expo-splash-screen
+
+8. npm install -D tailwindcss @types/react-native @babel/core
