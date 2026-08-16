@@ -29,7 +29,8 @@
             "newArchEnabled": false
           }
         }
-      ]
+      ],
+      "expo-router"
     ]
   }
 }

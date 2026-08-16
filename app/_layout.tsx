@@ -1,54 +1,30 @@
 import { useEffect } from 'react';
-import { Stack, router, SplashScreen } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
+import { Stack, router } from 'expo-router';
 import { useAuthStore } from '../src/stores/authStore';
-import { View, ActivityIndicator } from 'react-native';
-import { useFonts } from 'expo-font';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-
-SplashScreen.preventAutoHideAsync();
+import { ActivityIndicator, View } from 'react-native';
 
 export default function RootLayout() {
-  const { loadUser, user, loading } = useAuthStore();
-  const [fontsLoaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
+  const { user, loading, loadUser } = useAuthStore();
 
   useEffect(() => {
     loadUser();
   }, []);
 
-  useEffect(() => {
-    if (fontsLoaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded]);
-
-  useEffect(() => {
-    if (!loading && fontsLoaded) {
-      if (user) {
-        router.replace('/(tabs)');
-      } else {
-        router.replace('/(auth)/login');
-      }
-    }
-  }, [loading, user, fontsLoaded]);
-
-  if (loading || !fontsLoaded) {
+  if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'white' }}>
-        <ActivityIndicator size="large" color="#ef4444" />
+      <View className="flex-1 items-center justify-center">
+        <ActivityIndicator size="large" />
       </View>
     );
   }
 
   return (
-    <SafeAreaProvider>
-      <StatusBar style="dark" />
-      <Stack screenOptions={{ headerShown: false }}>
+    <Stack screenOptions={{ headerShown: false }}>
+      {!user ? (
         <Stack.Screen name="(auth)" />
+      ) : (
         <Stack.Screen name="(tabs)" />
-      </Stack>
-    </SafeAreaProvider>
+      )}
+    </Stack>
   );
 }
