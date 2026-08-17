@@ -6,6 +6,10 @@ import Constants from 'expo-constants';
 const supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl;
 const supabaseAnonKey = Constants.expoConfig?.extra?.supabaseAnonKey;
 
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Supabase credentials are missing. Check your .env and app.config.js');
+}
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage: SecureStore,
