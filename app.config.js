@@ -1,4 +1,4 @@
-require('dotenv').config();  // 👈 this loads .env into process.env
+require('dotenv').config();
 
 module.exports = {
   expo: {
@@ -8,7 +8,7 @@ module.exports = {
     orientation: 'portrait',
     icon: './assets/icon.png',
     userInterfaceStyle: 'light',
-    scheme: 'com.m4rkbello.TremorPH', // needed for OAuth
+    scheme: 'com.m4rkbello.TremorPH',
 
     ios: {
       supportsTablet: true,
@@ -27,19 +27,11 @@ module.exports = {
       favicon: './assets/favicon.png',
     },
     plugins: [
-      [
-        'expo-build-properties',
-        {
-          android: {
-            newArchEnabled: false,
-          },
-        },
-      ],
+      ['expo-build-properties', { android: { newArchEnabled: false } }],
       'expo-router',
       'expo-status-bar',
     ],
 
-    // 👇 This is where environment variables are injected
     extra: {
       supabaseUrl: process.env.SUPABASE_URL,
       supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
