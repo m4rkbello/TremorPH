@@ -1,6 +1,29 @@
-// app/_layout.tsx
-import { Stack } from 'expo-router';
+import { useEffect } from 'react';
+import { Stack, useRouter, useSegments } from 'expo-router';
+import { useAuthStore } from '../src/stores/authStore';
+import LoadingSpinner from '../src/components/LoadingSpinner';
 
 export default function RootLayout() {
-  return <Stack />;
+  const { init, loading, user } = useAuthStore();
+  const segments = useSegments();
+  const router = useRouter();
+
+  useEffect(() => {
+    init();
+  }, []);
+
+  useEffect(() => {
+    if (loading) return;
+    const inAuthGroup = segments[0] === '(auth)';
+
+    if (!user && !inAuthGroup) {
+      router.replace('/(auth)/login');
+    } else if (user && inAuthGroup) {
+      router.replace('/(tabs)');
+    }
+  }, [user, loading, segments]);
+
+  if (loading) return <LoadingSpinner />;
+
+  return <Stack screenOptions={{ headerShown: false }} />;
 }
