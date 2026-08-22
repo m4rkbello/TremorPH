@@ -2,8 +2,7 @@ import { View, Text } from 'react-native';
 import { Earthquake } from '../types';
 
 export default function EarthquakeCard({ earthquake }: { earthquake: Earthquake }) {
-  const magnitudeColor = earthquake.magnitude >= 7 ? 'bg-red-700' :
-                         earthquake.magnitude >= 5 ? 'bg-orange-500' : 'bg-yellow-500';
+  const magnitudeColor = earthquake.magnitude >= 7 ? 'bg-red-700' : earthquake.magnitude >= 5 ? 'bg-orange-500' : 'bg-yellow-500';
 
   return (
     <View className="bg-white rounded-lg p-4 mb-3 shadow-sm border border-gray-200">
