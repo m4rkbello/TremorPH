@@ -9,7 +9,7 @@ export async function signInWithGoogle() {
     provider: 'google',
     options: {
       redirectTo: AuthSession.makeRedirectUri({
-        scheme: 'com.m4rkbello.TremorPH', // must match your app's scheme
+        scheme: 'com.m4rkbello.TremorPH',
       }),
     },
   });
