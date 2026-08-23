@@ -16,6 +16,7 @@ export interface Earthquake {
   occurred_at: string;
 }
 
+
 export interface SafeZone {
   id: string;
   name: string;
