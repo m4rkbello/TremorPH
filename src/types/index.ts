@@ -15,7 +15,6 @@ export interface Earthquake {
   region: string | null;
   occurred_at: string;
 }
-
 export interface SafeZone {
   id: string;
   name: string;
@@ -28,7 +27,6 @@ export interface SafeZone {
   city: string | null;
   distance_from_user?: number;
 }
-
 export interface EmergencyContact {
   id: string;
   user_id: string;
