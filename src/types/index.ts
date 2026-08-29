@@ -14,8 +14,8 @@ export interface Earthquake {
   location: string | null;
   region: string | null;
   occurred_at: string;
+  is_par?: boolean;
 }
-
 
 export interface SafeZone {
   id: string;
