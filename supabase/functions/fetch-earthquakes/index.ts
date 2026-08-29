@@ -1,54 +1,23 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import 'react-native-url-polyfill/auto';
+import { createClient } from '@supabase/supabase-js';
+import * as SecureStore from 'expo-secure-store';
 
-const PAR_BOUNDS = { north: 25.0, south: 3.0, east: 135.0, west: 115.0 };
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL as string;
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY as string;
 
-function isInPAR(lat: number, lon: number): boolean {
-  return lat >= PAR_BOUNDS.south && lat <= PAR_BOUNDS.north &&
-         lon >= PAR_BOUNDS.west && lon <= PAR_BOUNDS.east;
+if (!supabaseUrl || !supabaseUrl.startsWith('http')) {
+  throw new Error('Invalid or missing EXPO_PUBLIC_SUPABASE_URL in .env file');
 }
 
-serve(async (req) => {
-  try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+if (!supabaseAnonKey) {
+  throw new Error('Missing EXPO_PUBLIC_SUPABASE_ANON_KEY in .env file');
+}
 
-    const response = await fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson');
-    const data = await response.json();
-
-    let inserted = 0;
-    for (const feature of data.features) {
-      const [longitude, latitude, depth] = feature.geometry.coordinates;
-      const { mag, place, time } = feature.properties;
-      if (!isInPAR(latitude, longitude)) continue;
-
-      const { data: existing } = await supabase
-        .from('earthquakes')
-        .select('id')
-        .eq('source_id', feature.id)
-        .single();
-
-      if (!existing) {
-        await supabase.from('earthquakes').insert({
-          magnitude: mag,
-          latitude,
-          longitude,
-          depth,
-          location: place,
-          source: 'USGS',
-          source_id: feature.id,
-          occurred_at: new Date(time).toISOString(),
-          is_par: true,
-        });
-        inserted++;
-      }
-    }
-
-    return new Response(JSON.stringify({ success: true, inserted }), {
-      headers: { 'Content-Type': 'application/json' },
-    });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
-  }
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    storage: SecureStore,
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: false,
+  },
 });
