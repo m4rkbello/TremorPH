@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import '../global.css';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { useAuthStore } from '../src/stores/authStore';
 import LoadingSpinner from '../src/components/LoadingSpinner';
