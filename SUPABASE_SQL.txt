@@ -1,0 +1,284 @@
+-- ============================================================================
+-- 1. EXTENSIONS & SETUP
+-- ============================================================================
+create extension if not exists "uuid-ossp";
+create extension if not exists "postgis";
+
+-- ============================================================================
+-- 2. ENUMS
+-- ============================================================================
+create type user_status as enum ('safe', 'in_danger', 'evacuating', 'injured', 'trapped');
+create type friendship_status as enum ('pending', 'accepted', 'rejected', 'blocked');
+create type notification_type as enum ('earthquake_alert', 'sos_alert', 'friend_request', 'private_message');
+
+-- ============================================================================
+-- 3. PROFILES TABLE (Auto-synced with Google Auth & GPS)
+-- ============================================================================
+create table public.profiles (
+  id uuid references auth.users on delete cascade primary key,
+  first_name text,
+  middle_name text,
+  last_name text,
+  full_name text,
+  avatar_url text,
+  email text unique,
+  contact_number text,
+  age int,
+  sex text check (sex in ('Male', 'Female', 'Other', 'Prefer not to say')),
+  birthdate date,
+  status user_status default 'safe',
+  latitude double precision,
+  longitude double precision,
+  last_location_update timestamptz default now(),
+  public_key text, -- For End-to-End Encryption key exchange
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+-- ============================================================================
+-- 4. GOOGLE AUTH TRIGGER (Auto-creates profile on login)
+-- ============================================================================
+create or replace function public.handle_new_user()
+returns trigger as $$
+declare
+  raw_full_name text;
+  first_n text;
+  last_n text;
+begin
+  raw_full_name := coalesce(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name', '');
+  
+  if raw_full_name != '' then
+    first_n := split_part(raw_full_name, ' ', 1);
+    last_n := substr(raw_full_name, length(first_n) + 2);
+  else
+    first_n := 'User';
+    last_n := '';
+  end if;
+
+  insert into public.profiles (
+    id,
+    first_name,
+    last_name,
+    full_name,
+    avatar_url,
+    email,
+    status
+  ) values (
+    new.id,
+    first_n,
+    last_n,
+    raw_full_name,
+    new.raw_user_meta_data->>'avatar_url',
+    new.email,
+    'safe'
+  )
+  on conflict (id) do update set
+    avatar_url = excluded.avatar_url,
+    full_name = coalesce(public.profiles.full_name, excluded.full_name),
+    updated_at = now();
+
+  return new;
+end;
+$$ language plpgsql security definer;
+
+-- Trigger execution on auth.users insert
+create or replace trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.handle_new_user();
+
+-- ============================================================================
+-- 5. EMERGENCY CONTACTS & FCM DEVICE TOKENS
+-- ============================================================================
+create table public.emergency_contacts (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  name text not null,
+  phone_number text not null,
+  relationship text,
+  is_primary boolean default false,
+  created_at timestamptz default now()
+);
+
+create table public.user_device_tokens (
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  push_token text not null primary key,
+  device_type text,
+  is_active boolean default true,
+  updated_at timestamptz default now()
+);
+
+-- ============================================================================
+-- 6. EARTHQUAKE MONITORING & NOTIFICATIONS
+-- ============================================================================
+create table public.earthquakes (
+  id uuid default gen_random_uuid() primary key,
+  source_id text unique,
+  magnitude numeric not null,
+  latitude double precision not null,
+  longitude double precision not null,
+  depth numeric,
+  location text,
+  occurred_at timestamptz not null,
+  created_at timestamptz default now()
+);
+
+create table public.notifications (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  earthquake_id uuid references public.earthquakes(id) on delete cascade,
+  title text not null,
+  body text not null,
+  type notification_type default 'earthquake_alert',
+  status text default 'sent',
+  created_at timestamptz default now()
+);
+
+-- ============================================================================
+-- 7. FRIENDSHIPS & SOCIAL GRAPH
+-- ============================================================================
+create table public.friendships (
+  id uuid default gen_random_uuid() primary key,
+  requester_id uuid references public.profiles(id) on delete cascade not null,
+  receiver_id uuid references public.profiles(id) on delete cascade not null,
+  status friendship_status default 'pending',
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  constraint unique_friend_pair unique (requester_id, receiver_id),
+  constraint no_self_friend check (requester_id != receiver_id)
+);
+
+-- Helper function to verify accepted friendship status
+create or replace function public.is_friend(user_a uuid, user_b uuid)
+returns boolean as $$
+begin
+  return exists (
+    select 1 from public.friendships
+    where status = 'accepted'
+      and (
+        (requester_id = user_a and receiver_id = user_b) or
+        (requester_id = user_b and receiver_id = user_a)
+      )
+  );
+end;
+$$ language plpgsql security definer;
+
+-- ============================================================================
+-- 8. PUBLIC COMMUNITY CHAT
+-- ============================================================================
+create table public.public_messages (
+  id uuid default gen_random_uuid() primary key,
+  sender_id uuid references public.profiles(id) on delete cascade not null,
+  content text not null,
+  created_at timestamptz default now()
+);
+
+-- ============================================================================
+-- 9. PRIVATE CHAT & END-TO-END ENCRYPTED CONVERSATIONS
+-- ============================================================================
+create table public.private_conversations (
+  id uuid default gen_random_uuid() primary key,
+  user_one uuid references public.profiles(id) on delete cascade not null,
+  user_two uuid references public.profiles(id) on delete cascade not null,
+  created_at timestamptz default now(),
+  constraint unique_conversation_pair unique (user_one, user_two),
+  constraint user_order check (user_one < user_two)
+);
+
+create table public.private_messages (
+  id uuid default gen_random_uuid() primary key,
+  conversation_id uuid references public.private_conversations(id) on delete cascade not null,
+  sender_id uuid references public.profiles(id) on delete cascade not null,
+  receiver_id uuid references public.profiles(id) on delete cascade not null,
+  encrypted_content text not null, -- Encrypted ciphertext (E2EE)
+  nonce text,                      -- Cryptographic initialization vector / nonce
+  is_read boolean default false,
+  created_at timestamptz default now()
+);
+
+-- ============================================================================
+-- 10. ROW LEVEL SECURITY (RLS) POLICIES
+-- ============================================================================
+alter table public.profiles enable row level security;
+alter table public.emergency_contacts enable row level security;
+alter table public.user_device_tokens enable row level security;
+alter table public.earthquakes enable row level security;
+alter table public.notifications enable row level security;
+alter table public.friendships enable row level security;
+alter table public.public_messages enable row level security;
+alter table public.private_conversations enable row level security;
+alter table public.private_messages enable row level security;
+
+-- Profiles: Authenticated users can view live locations of users; edit only their own
+create policy "Authenticated users can view profiles and live GPS"
+  on public.profiles for select to authenticated using (true);
+
+create policy "Users can update own profile and GPS location"
+  on public.profiles for update to authenticated using (auth.uid() = id);
+
+-- Emergency Contacts & Tokens
+create policy "Users manage own emergency contacts"
+  on public.emergency_contacts for all to authenticated using (auth.uid() = user_id);
+
+create policy "Users manage own push tokens"
+  on public.user_device_tokens for all to authenticated using (auth.uid() = user_id);
+
+-- Earthquakes & Notifications
+create policy "Anyone can read earthquakes"
+  on public.earthquakes for select to authenticated using (true);
+
+create policy "Users can view own notifications"
+  on public.notifications for select to authenticated using (auth.uid() = user_id);
+
+-- Friendships
+create policy "Users can view their friendships"
+  on public.friendships for select to authenticated
+  using (auth.uid() = requester_id or auth.uid() = receiver_id);
+
+create policy "Users can send friend requests"
+  on public.friendships for insert to authenticated
+  with check (auth.uid() = requester_id);
+
+create policy "Users can update received friend requests"
+  on public.friendships for update to authenticated
+  using (auth.uid() = receiver_id or auth.uid() = requester_id);
+
+-- Public Messages: Any authenticated user can read and post
+create policy "Anyone can read public chat"
+  on public.public_messages for select to authenticated using (true);
+
+create policy "Authenticated users can post to public chat"
+  on public.public_messages for insert to authenticated with check (auth.uid() = sender_id);
+
+-- Private Conversations: Only accepted friends can view/create conversation channels
+create policy "Users can view their own private conversations"
+  on public.private_conversations for select to authenticated
+  using (auth.uid() = user_one or auth.uid() = user_two);
+
+create policy "Only accepted friends can start private conversations"
+  on public.private_conversations for insert to authenticated
+  with check (
+    (auth.uid() = user_one or auth.uid() = user_two) and
+    public.is_friend(user_one, user_two)
+  );
+
+-- Private Messages: Only participants of the conversation who are friends can read/write
+create policy "Participants can read private messages"
+  on public.private_messages for select to authenticated
+  using (auth.uid() = sender_id or auth.uid() = receiver_id);
+
+create policy "Friends can send private E2EE messages"
+  on public.private_messages for insert to authenticated
+  with check (
+    auth.uid() = sender_id and
+    public.is_friend(sender_id, receiver_id)
+  );
+
+-- ============================================================================
+-- 11. REALTIME REPLICATION ENABLEMENT
+-- ============================================================================
+alter publication supabase_realtime add table public.profiles;
+alter publication supabase_realtime add table public.earthquakes;
+alter publication supabase_realtime add table public.public_messages;
+alter publication supabase_realtime add table public.private_messages;
+alter publication supabase_realtime add table public.friendships;
+alter publication supabase_realtime add table public.notifications;
