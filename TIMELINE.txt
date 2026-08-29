@@ -31,3 +31,6 @@ npm install @supabase/supabase-js zustand nativewind expo-notifications expo-sms
 npm install -D tailwindcss @types/react-native @babel/core
 
 npx tailwindcss init
+
+npx expo install nativewind
+npm install --save-dev tailwindcss
