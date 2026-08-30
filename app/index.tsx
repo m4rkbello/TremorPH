@@ -1,10 +1,6 @@
-// app/index.tsx
-import { View, Text } from 'react-native';
+import { Redirect } from 'expo-router';
 
-export default function Home() {
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text>Hello from Expo Router!</Text>
-    </View>
-  );
+// This simply triggers the RootLayout router logic above.
+export default function Index() {
+  return <Redirect href="/(tabs)" />;
 }
