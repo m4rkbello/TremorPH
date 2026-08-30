@@ -5,12 +5,15 @@ import { supabase } from './supabase';
 WebBrowser.maybeCompleteAuthSession();
 
 export async function signInWithGoogle() {
-  // 1. Auto-generate the correct redirect URL based on the environment
-  const redirectUrl = Linking.createURL('/auth/callback');
+  // 1. Dynamically generate the exact redirect URL (exp:// for Expo Go, custom scheme for Prod)
+  const redirectUrl = Linking.createURL('');
   
-  console.log('\n🚨 COPY THIS EXACT URL TO SUPABASE REDIRECT URLS:');
-  console.log(redirectUrl, '\n');
+  console.log('\n=========================================');
+  console.log('🚨 COPY THIS EXACT URL TO SUPABASE SITE URL:');
+  console.log(redirectUrl);
+  console.log('=========================================\n');
 
+  // 2. Get the Google OAuth URL from Supabase
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
@@ -22,17 +25,18 @@ export async function signInWithGoogle() {
   if (error) throw error;
   if (!data?.url) throw new Error('No OAuth URL returned');
 
-  // 2. Open the browser
+  // 3. Open the secure browser to log in
   const result = await WebBrowser.openAuthSessionAsync(
     data.url,
     redirectUrl,
     { showInRecents: true }
   );
 
-  // 3. Process the result when the browser snaps closed
+  // 4. Process the result when the browser snaps closed
   if (result.type === 'success' && result.url) {
     const urlString = result.url;
     
+    // Extract tokens safely
     const hashOrQuery = urlString.includes('#') 
       ? urlString.split('#')[1] 
       : urlString.includes('?') 
@@ -47,6 +51,7 @@ export async function signInWithGoogle() {
       return acc;
     }, {} as Record<string, string>);
 
+    // 5. Establish the Supabase session
     if (params.access_token && params.refresh_token) {
       const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
         access_token: params.access_token,
