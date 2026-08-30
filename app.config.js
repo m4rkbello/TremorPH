@@ -8,7 +8,7 @@ module.exports = {
     orientation: 'portrait',
     icon: './assets/icon.png',
     userInterfaceStyle: 'light',
-    scheme: 'com.m4rkbello.TremorPH', // This must exactly match your Supabase Redirect URL
+    scheme: 'com.m4rkbello.TremorPH',
 
     ios: {
       supportsTablet: true,
