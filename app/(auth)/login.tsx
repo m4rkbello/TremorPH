@@ -12,10 +12,10 @@ export default function LoginScreen() {
   const { signIn, signInWithGoogle } = useAuthStore();
 
   const handleLogin = async () => {
-    if (!email || !password) return Alert.alert('Error', 'Please fill in all fields');
+    if (!email || !password) return Alert.alert('Missing Fields', 'Please enter both email and password');
     setLoading(true);
     try {
-      await signIn(email, password);
+      await signIn(email.trim(), password);
       router.replace('/(tabs)');
     } catch (e: any) {
       Alert.alert('Sign In Failed', e.message);
@@ -65,15 +65,15 @@ export default function LoginScreen() {
             value={password}
             onChangeText={setPassword}
           />
-          
+
           <TouchableOpacity onPress={() => router.push('/(auth)/forgot-password')} className="items-end mb-6">
             <Text className="text-sm font-semibold text-red-500">Forgot Password?</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity 
-            className="bg-red-500 rounded-xl py-4 items-center shadow-sm" 
-            onPress={handleLogin} 
-            disabled={loading}
+          <TouchableOpacity
+            className="bg-red-500 rounded-xl py-4 items-center shadow-sm"
+            onPress={handleLogin}
+            disabled={loading || googleLoading}
           >
             {loading ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-bold text-lg">Sign In</Text>}
           </TouchableOpacity>
@@ -88,7 +88,7 @@ export default function LoginScreen() {
         <TouchableOpacity
           className="bg-white border border-gray-300 rounded-xl py-4 flex-row justify-center items-center shadow-sm"
           onPress={handleGoogleLogin}
-          disabled={googleLoading}
+          disabled={loading || googleLoading}
         >
           {googleLoading ? (
             <ActivityIndicator color="#DB4437" />
