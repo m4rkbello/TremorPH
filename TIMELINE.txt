@@ -34,3 +34,4 @@ npx tailwindcss init
 
 npx expo install nativewind
 npm install --save-dev tailwindcss
+
