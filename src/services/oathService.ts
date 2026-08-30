@@ -23,9 +23,9 @@ export async function signInWithGoogle() {
     );
 
     if (result.type === 'success' && result.url) {
-      // Extract the code from the redirect URL
+      
       const { code } = AuthSession.parse(result.url).params;
-      // Exchange code for session
+
       const { data: session, error: sessionError } = await supabase.auth.exchangeCodeForSession(code);
       if (sessionError) throw sessionError;
       return session;
