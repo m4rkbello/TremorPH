@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "707908322131",
+    "project_id": "tremorph",
+    "storage_bucket": "tremorph.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:707908322131:android:38f37ecb790d94523c17a6",
+        "android_client_info": {
+          "package_name": "com.m4rkbello.TremorPH"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBhSHFWMOLi1OmzeQ70Y5mrFphdQ4xA2MM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
