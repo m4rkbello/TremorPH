@@ -65,6 +65,7 @@ export default function SignUpScreen() {
               value={firstName}
               onChangeText={setFirstName}
             />
+
             <TextInput
               className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-4 text-base text-gray-900 mb-3"
               placeholder="Middle Name (Optional)"
@@ -98,7 +99,6 @@ export default function SignUpScreen() {
               />
             </View>
 
-            {/* Sex Selection */}
             <View className="flex-row gap-2 mb-3">
               {(['Male', 'Female', 'Other'] as const).map((option) => (
                 <TouchableOpacity
