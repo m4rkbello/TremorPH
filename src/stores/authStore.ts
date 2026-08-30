@@ -100,7 +100,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-signInWithGoogle: async () => {
+  signInWithGoogle: async () => {
     const session = await googleAuthService();
     
     if (session?.user) {
@@ -108,7 +108,7 @@ signInWithGoogle: async () => {
       
       const fullName = session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'Google User';
       
-      // Upsert profile for Google users
+      // Upsert profile for Google users to the database
       const { data: profile } = await supabase
         .from('profiles')
         .upsert({ 
