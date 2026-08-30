@@ -5,7 +5,7 @@ import { supabase } from './supabase';
 WebBrowser.maybeCompleteAuthSession();
 
 export async function signInWithGoogle() {
-  // 1. Dynamically generate the exact redirect URL (exp:// for Expo Go, custom scheme for Prod)
+
   const redirectUrl = Linking.createURL('');
   
   console.log('\n=========================================');
